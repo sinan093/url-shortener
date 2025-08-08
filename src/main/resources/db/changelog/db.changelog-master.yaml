@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: createUrlSchema
+      author: sinan.kirbas
+      changes:
+        - sql:
+            sql: create schema url
+
+  -  changeSet:
+       id:  createUrlShortenerTable
+       author:  sinan.kirbas
+       changes:
+         -  createTable:
+              columns:
+                - column:
+                    name: id
+                    type: varchar(255)
+                -  column:
+                     name:  url
+                     type:  varchar(1024)
+                - column:
+                    name: short_url
+                    type: varchar(255)
+                - column:
+                    name: ttl
+                    type: timestamp
+                    constraints:
+                      nullable: true
+              schemaName:  url
+              tableName:  shortened_url
