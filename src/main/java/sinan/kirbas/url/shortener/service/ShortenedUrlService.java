@@ -11,12 +11,7 @@ import sinan.kirbas.url.shortener.enums.WarningMessages;
 import sinan.kirbas.url.shortener.mapper.ShortenedUrlMapper;
 import sinan.kirbas.url.shortener.model.ShortenedUrlDto;
 import sinan.kirbas.url.shortener.repository.ShortenedUrlRepository;
-
-import java.net.URI;
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import sinan.kirbas.url.shortener.util.ShortenedUrlUtil;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -25,6 +20,7 @@ public class ShortenedUrlService {
 
     private final ShortenedUrlRepository shortenedUrlRepository;
     private final ShortenedUrlMapper shortenedUrlMapper;
+    private final ShortenedUrlUtil shortenedUrlUtil;
 
     @Value("${custom.check.expired.on-creation}")
     private boolean checkExpiredOnCreation;
@@ -34,7 +30,7 @@ public class ShortenedUrlService {
                 shortenedUrlRepository.findById(id)
                         .orElseThrow(() ->
                                 new ResponseStatusException(HttpStatus.NOT_FOUND, WarningMessages.NOT_FOUND.message));
-        if(isExpired(shortenedUrl.getTtl())) {
+        if(shortenedUrlUtil.isExpired(shortenedUrl.getTtl())) {
             shortenedUrlRepository.deleteById(id);
             log.warn(WarningMessages.EXPIRED.message);
             throw new ResponseStatusException(HttpStatus.GONE, WarningMessages.EXPIRED.message);
@@ -44,7 +40,7 @@ public class ShortenedUrlService {
     }
 
     public void createShortenedUrl(ShortenedUrlDto shortenedUrlDto) {
-        if(!isUrlValid(shortenedUrlDto.getUrl())) {
+        if(!shortenedUrlUtil.isUrlValid(shortenedUrlDto.getUrl())) {
             log.warn(WarningMessages.MALFORMED_URL.message);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WarningMessages.MALFORMED_URL.message);
         }
@@ -55,17 +51,17 @@ public class ShortenedUrlService {
             }
             ShortenedUrl shortenedUrl = shortenedUrlMapper.toShortenedUrl(shortenedUrlDto);
             shortenedUrl.setShortUrl(shortenedUrlDto.getId());
-            if(checkExpiredOnCreation && isExpired(shortenedUrlDto.getTtl())) {
+            if(checkExpiredOnCreation && shortenedUrlUtil.isExpired(shortenedUrlDto.getTtl())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WarningMessages.TTL_FUTURE.message);
             }
             shortenedUrlRepository.save(shortenedUrl);
             log.trace("Shortened Url created with id: {}", shortenedUrl.getId());
         } else {
-            String shortenedString = createShortenedString();
+            String shortenedString = shortenedUrlUtil.createShortenedString();
             ShortenedUrl shortenedUrl = shortenedUrlMapper.toShortenedUrl(shortenedUrlDto);
             shortenedUrl.setShortUrl(shortenedString);
             shortenedUrl.setId(shortenedString);
-            if(checkExpiredOnCreation && isExpired(shortenedUrlDto.getTtl())) {
+            if(checkExpiredOnCreation && shortenedUrlUtil.isExpired(shortenedUrlDto.getTtl())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WarningMessages.TTL_FUTURE.message);
             }
             shortenedUrlRepository.save(shortenedUrl);
@@ -75,36 +71,6 @@ public class ShortenedUrlService {
 
     public void deleteShortenedUrlById(String id) {
         shortenedUrlRepository.deleteById(id);
-    }
-
-
-    private String createShortenedString() {
-        String validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        SecureRandom secureRandom = new SecureRandom();
-        String shortenedString = "";
-        for(int i = 0; i<=5; i++) {
-            int randomNumber = secureRandom.nextInt(62);
-            shortenedString = shortenedString + validChars.charAt(randomNumber);
-        }
-        return shortenedString;
-    }
-
-    private boolean isUrlValid(String url) {
-        try {
-            new URI(url).toURL();
-            return true;
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-            return false;
-        }
-    }
-
-    private boolean isExpired(Date ttl) {
-        if(ttl != null &&
-                LocalDateTime.now().isAfter(LocalDateTime.ofInstant(ttl.toInstant(), ZoneId.systemDefault()))) {
-            return true;
-        }
-        return false;
     }
 
 }
