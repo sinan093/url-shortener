@@ -53,26 +53,21 @@ public class ShortenedUrlService {
                 log.warn(WarningMessages.ID_TAKEN.message);
                 throw new ResponseStatusException(HttpStatus.CONFLICT, WarningMessages.ID_TAKEN.message);
             }
-            ShortenedUrl shortenedUrl = new ShortenedUrl();
-            shortenedUrl.setUrl(shortenedUrlDto.getUrl());
+            ShortenedUrl shortenedUrl = shortenedUrlMapper.toShortenedUrl(shortenedUrlDto);
             shortenedUrl.setShortUrl(shortenedUrlDto.getId());
-            shortenedUrl.setId(shortenedUrlDto.getId());
             if(checkExpiredOnCreation && isExpired(shortenedUrlDto.getTtl())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WarningMessages.TTL_FUTURE.message);
             }
-            shortenedUrl.setTtl(shortenedUrlDto.getTtl());
             shortenedUrlRepository.save(shortenedUrl);
             log.trace("Shortened Url created with id: {}", shortenedUrl.getId());
         } else {
             String shortenedString = createShortenedString();
-            ShortenedUrl shortenedUrl = new ShortenedUrl();
-            shortenedUrl.setUrl(shortenedUrlDto.getUrl());
+            ShortenedUrl shortenedUrl = shortenedUrlMapper.toShortenedUrl(shortenedUrlDto);
             shortenedUrl.setShortUrl(shortenedString);
             shortenedUrl.setId(shortenedString);
             if(checkExpiredOnCreation && isExpired(shortenedUrlDto.getTtl())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WarningMessages.TTL_FUTURE.message);
             }
-            shortenedUrl.setTtl(shortenedUrlDto.getTtl());
             shortenedUrlRepository.save(shortenedUrl);
             log.trace("Shortened Url created with id: {}", shortenedString);
         }

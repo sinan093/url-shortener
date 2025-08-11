@@ -9,11 +9,20 @@ public class ShortenedUrlMapper {
 
     public ShortenedUrlDto toShortenedUrlDto(ShortenedUrl shortenedUrl) {
         ShortenedUrlDto shortenedUrlDto = new ShortenedUrlDto();
+        shortenedUrlDto.setId(shortenedUrl.getId());
         shortenedUrlDto.setUrl(shortenedUrl.getUrl());
         shortenedUrlDto.setShortUrl(shortenedUrl.getShortUrl());
         shortenedUrlDto.setTtl(shortenedUrlDto.getTtl());
-        shortenedUrlDto.setId(shortenedUrl.getId());
         return shortenedUrlDto;
+    }
+
+    public ShortenedUrl toShortenedUrl(ShortenedUrlDto shortenedUrlDto) {
+        ShortenedUrl shortenedUrl = new ShortenedUrl();
+        shortenedUrl.setId(shortenedUrlDto.getId());
+        shortenedUrl.setUrl(shortenedUrlDto.getUrl());
+        shortenedUrl.setShortUrl(shortenedUrlDto.getShortUrl());
+        shortenedUrl.setTtl(shortenedUrlDto.getTtl());
+        return shortenedUrl;
     }
 
 }
